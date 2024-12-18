@@ -26,12 +26,22 @@ class DatabaseHelper {
 
   Future<void> _onCreate(Database db, int version) async {
     await db.execute('''
-      CREATE TABLE user(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    ''');
+    CREATE TABLE user(
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      username TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  ''');
+
+    await db.execute('''
+    CREATE TABLE map_pins (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      latitude REAL NOT NULL,
+      longitude REAL NOT NULL,
+      label TEXT NOT NULL,
+      comments TEXT
+    )
+''');
   }
 
 

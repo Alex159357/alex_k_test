@@ -1,6 +1,7 @@
 import 'package:alex_k_test/src/config/constaints/texts.dart';
 import 'package:alex_k_test/src/config/constaints/texts.dart';
 import 'package:alex_k_test/src/core/exceptions/context.dart';
+import 'package:alex_k_test/src/core/exceptions/on_user_bloc.dart';
 import 'package:alex_k_test/src/features/presentation/blocs/user/bloc.dart';
 import 'package:alex_k_test/src/features/presentation/blocs/user/state.dart';
 import 'package:alex_k_test/src/features/presentation/widgets/general_primary_button.dart';
@@ -51,11 +52,13 @@ class AuthView extends StatelessWidget {
       buildWhen: _buildPasswordFieldWhen, builder: _getPasswordFieldBuilder);
 
   Widget get _geLoginButton => BlocBuilder<UserBloc, UserState>(
+    buildWhen: _buildLoginButtonWhen,
        builder: _getLoginButtonBuilder);
 
 //Builders
   Widget _getEmailFieldBuilder(BuildContext context, UserState state) =>
       GeneralTextField(
+        initialText: state.email,
         hintText: Texts.hints.enterEmail,
         onChanged: (v) => context.userBloc.setEmail(v),
         onSubmitted: (v) {},
@@ -64,6 +67,7 @@ class AuthView extends StatelessWidget {
   Widget _getPasswordFieldBuilder(BuildContext context, UserState state) =>
       GeneralTextField(
         isPassword: true,
+        initialText: state.password,
         onShowPassword: (v) => context.userBloc.setPasswordVisibilityState(v),
         onChanged: (v) => context.userBloc.setPassword(v),
         onSubmitted: (v) {},

@@ -1,5 +1,6 @@
 import 'package:alex_k_test/src/config/constaints/texts.dart';
 import 'package:alex_k_test/src/core/exceptions/context.dart';
+import 'package:alex_k_test/src/core/exceptions/on_user_bloc.dart';
 import 'package:alex_k_test/src/features/domain/states/auth_state.dart';
 import 'package:alex_k_test/src/features/presentation/blocs/user/bloc.dart';
 import 'package:alex_k_test/src/features/presentation/blocs/user/state.dart';
@@ -37,32 +38,39 @@ class MenuView extends StatelessWidget {
             const SizedBox(
               width: 24,
             ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  user.userName,
-                  style: context.theme.textTheme.headlineMedium
-                      ?.copyWith(fontWeight: FontWeight.w100),
-                ),
-                if (user.isDemo) Text(Texts.labels.demoUser)
-              ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  FittedBox(
+                    child: Text(
+                      user.userName.toString(),
+                      style: context.theme.textTheme.headlineMedium
+                          ?.copyWith(fontWeight: FontWeight.w100),
+                    ),
+                  ),
+                  if (user.isDemo) Text(Texts.labels.demoUser)
+                ],
+              ),
             ),
-            const Expanded(child: SizedBox()),
+            const SizedBox(
+              width: 16,
+            ),
             user.isDemo
                 ? Column(
                     children: [
                       IconButton(
-                          onPressed: context.userBloc.logOut(),
+                          onPressed: () => context.userBloc.loginPressed(),
                           icon: const Icon(Icons.login)),
-                      Text(Texts.labels.login)
+                      Text(Texts.labels.login),
+                      //DISPLAY LOGIN FORM
                     ],
                   )
                 : Column(
                     children: [
                       IconButton(
-                          onPressed: context.userBloc.logOut(),
+                          onPressed: () => context.userBloc.logOut(),
                           icon: const Icon(Icons.logout_rounded)),
                       Text(Texts.labels.logOut)
                     ],

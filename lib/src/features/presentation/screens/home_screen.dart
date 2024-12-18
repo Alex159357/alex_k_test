@@ -1,4 +1,5 @@
 import 'package:alex_k_test/src/core/exceptions/context.dart';
+import 'package:alex_k_test/src/core/exceptions/on_user_bloc.dart';
 import 'package:alex_k_test/src/features/domain/states/auth_state.dart';
 import 'package:alex_k_test/src/features/domain/states/general_screen_state.dart';
 import 'package:alex_k_test/src/features/presentation/blocs/user/bloc.dart';
@@ -52,7 +53,7 @@ class _HomeScreenState extends State<HomeScreen> {
         InitialScreenState() => _getAuthHandleBody,
         LoadingScreenState() => const LoadingView(),
         ErrorScreenState() =>
-          ErrorView(message: (state.screenState as ErrorScreenState).message),
+          ErrorView(message: (state.screenState as ErrorScreenState).message, onGotIt: ()=> context.userBloc.init(),),
       };
 
   Widget _authBodyBuilder(BuildContext context, UserState state) =>

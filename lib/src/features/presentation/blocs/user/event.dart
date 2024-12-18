@@ -44,3 +44,12 @@ class OnPasswordChanged extends UserEvent {
 class OnLoginPressed extends UserEvent {
   const OnLoginPressed();
 }
+
+class OnRestoreScreenState extends UserEvent{
+
+  const OnRestoreScreenState();
+}
+
+class OnLogoutPressed extends UserEvent {
+  const OnLogoutPressed();
+}

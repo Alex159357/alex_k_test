@@ -32,7 +32,7 @@ class UserDatabase {
       final result = await db.query('user', limit: 1);
 
       if (result.isNotEmpty) {
-        return result.first;
+        return  result.first;
       }
 
       return null;

@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
+import 'package:alex_k_test/src/features/domain/entities/map_pin_entity.dart';
+import 'package:alex_k_test/src/features/presentation/providers/custom_tile_provider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -8,23 +10,12 @@ import 'package:latlong2/latlong.dart';
 import 'package:path_provider/path_provider.dart';
 import '../../../config/api_keys.dart';
 
-class MapPin {
-  final double latitude;
-  final double longitude;
-  final String label;
-
-  MapPin({
-    required this.latitude,
-    required this.longitude,
-    required this.label,
-  });
-}
-
 class MapWidget extends StatefulWidget {
   final double userLat;
   final double userLng;
-  final List<MapPin> pins;
+  final List<MapPinEntity> pins;
   final Function(double lat, double lng) onMapTap;
+  final Function(double? id)? onPinTap;
   final double initialZoom;
 
   const MapWidget({
@@ -33,7 +24,8 @@ class MapWidget extends StatefulWidget {
     required this.userLng,
     required this.pins,
     required this.onMapTap,
-    this.initialZoom = 11.0,
+    this.onPinTap, // Optional callback
+    this.initialZoom = 13.0, // Increased default zoom
   });
 
   @override
@@ -46,6 +38,10 @@ class _MapWidgetState extends State<MapWidget> {
   bool _isInitialized = false;
   late Directory _cacheDir;
   TileProvider? _tileProvider;
+
+  // Define map bounds for San Francisco area
+  static final LatLng _swBound = LatLng(37.6, -122.6);
+  static final LatLng _neBound = LatLng(37.9, -122.2);
 
   @override
   void initState() {
@@ -69,6 +65,13 @@ class _MapWidgetState extends State<MapWidget> {
     } catch (e) {
       debugPrint('Error initializing cache: $e');
     }
+  }
+
+  bool _isValidCoordinate(double lat, double lng) {
+    return lat >= _swBound.latitude &&
+        lat <= _neBound.latitude &&
+        lng >= _swBound.longitude &&
+        lng <= _neBound.longitude;
   }
 
   Future<void> _downloadRegion() async {
@@ -138,83 +141,99 @@ class _MapWidgetState extends State<MapWidget> {
     final markers = <Marker>[];
 
     // Add user location marker
-    markers.add(
-      Marker(
-        point: LatLng(widget.userLat, widget.userLng),
-        width: 80,
-        height: 80,
-        child: Column(
-          children: [
-            Icon(
-              Icons.person_pin_circle,
-              color: Theme.of(context).primaryColor,
-              size: 40,
-            ),
-            Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(4),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 4,
-                  ),
-                ],
-              ),
-              child: const Text(
-                'You',
-                style: TextStyle(fontSize: 12),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-
-    // Add custom pins
-    for (final pin in widget.pins) {
+    if (_isValidCoordinate(widget.userLat, widget.userLng)) {
       markers.add(
         Marker(
-          point: LatLng(pin.latitude, pin.longitude),
+          point: LatLng(widget.userLat, widget.userLng),
           width: 80,
           height: 80,
           child: Column(
             children: [
               Icon(
-                Icons.location_pin,
+                Icons.person_pin_circle,
                 color: Theme.of(context).primaryColor,
                 size: 40,
               ),
-              if (pin.label.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(4),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 4,
-                      ),
-                    ],
-                  ),
-                  child: Text(
-                    pin.label,
-                    style: const TextStyle(fontSize: 12),
-                  ),
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(4),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      blurRadius: 4,
+                    ),
+                  ],
                 ),
+                child: const Text(
+                  'You',
+                  style: TextStyle(fontSize: 12),
+                ),
+              ),
             ],
           ),
         ),
       );
     }
 
+    // Add custom pins
+    for (final pin in widget.pins) {
+      if (_isValidCoordinate(pin.latitude, pin.longitude)) {
+        markers.add(
+          Marker(
+            point: LatLng(pin.latitude, pin.longitude),
+            width: 100,
+            height: 100,
+            child: GestureDetector(
+              // Added GestureDetector for tap handling
+              onTap: () {
+                if (widget.onPinTap != null) {
+                  widget.onPinTap!(pin.id);
+                }
+              },
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.location_pin,
+                    color: Theme.of(context).primaryColor,
+                    size: 60,
+                  ),
+                  if (pin.label.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(4),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 4,
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        pin.label,
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        );
+      } else {
+        print("Skipping invalid pin -> $pin");
+      }
+    }
+
     return markers;
   }
 
   void _handleTap(TapPosition tapPosition, LatLng point) {
-    widget.onMapTap(point.latitude, point.longitude);
+    if (_isValidCoordinate(point.latitude, point.longitude)) {
+      widget.onMapTap(point.latitude, point.longitude);
+    }
   }
 
   @override
@@ -233,7 +252,7 @@ class _MapWidgetState extends State<MapWidget> {
             options: MapOptions(
               initialCenter: LatLng(widget.userLat, widget.userLng),
               initialZoom: widget.initialZoom,
-              minZoom: 1.0, // Allow zooming out to see the entire world
+              minZoom: 11.0, // Increased minimum zoom
               maxZoom: 18.0,
               keepAlive: true,
               onTap: _handleTap,
@@ -241,19 +260,23 @@ class _MapWidgetState extends State<MapWidget> {
                 enableScrollWheel: true,
                 enableMultiFingerGestureRace: true,
               ),
+              // Add bounds
+              cameraConstraint: CameraConstraint.contain(
+                bounds: LatLngBounds(_swBound, _neBound),
+              ),
             ),
             children: [
               TileLayer(
                 urlTemplate:
                     'https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/{z}/{x}/{y}?access_token={accessToken}',
-                additionalOptions: {
+                additionalOptions: const {
                   'accessToken': ApiKeys.mapboxAccessToken,
                 },
                 tileProvider: _tileProvider!,
-                keepBuffer: 50, // Increased buffer for smoother navigation
+                keepBuffer: 50,
                 backgroundColor: Colors.grey[300],
                 maxZoom: 18,
-                minZoom: 1, // Match the MapOptions minZoom
+                minZoom: 11,
               ),
               MarkerLayer(
                 markers: _buildMarkers(),
@@ -278,111 +301,5 @@ class _MapWidgetState extends State<MapWidget> {
   @override
   void dispose() {
     super.dispose();
-  }
-}
-
-class CustomTileProvider extends TileProvider {
-  final String basePath;
-  final HttpClient _httpClient = HttpClient();
-  final Map<String, bool> _downloadingTiles = {};
-
-  CustomTileProvider(this.basePath);
-
-  @override
-  bool get supportsCancelLoading => true;
-
-  String _getTileKey(TileCoordinates coordinates) {
-    return '${coordinates.z}_${coordinates.x}_${coordinates.y}';
-  }
-
-  File _getTileFile(TileCoordinates coordinates) {
-    return File('$basePath/${_getTileKey(coordinates)}.png');
-  }
-
-  @override
-  ImageProvider getImageWithCancelLoadingSupport(
-    TileCoordinates coordinates,
-    TileLayer options,
-    Future<void> cancelLoading,
-  ) {
-    final file = _getTileFile(coordinates);
-    final tileKey = _getTileKey(coordinates);
-
-    if (file.existsSync()) {
-      return FileImage(file);
-    }
-
-    if (_downloadingTiles[tileKey] == true) {
-      return MemoryImage(Uint8List(0));
-    }
-
-    final url = options.urlTemplate!
-        .replaceAll('{z}', coordinates.z.toString())
-        .replaceAll('{x}', coordinates.x.toString())
-        .replaceAll('{y}', coordinates.y.toString())
-        .replaceAll(
-            '{accessToken}', options.additionalOptions?['accessToken'] ?? '');
-
-    _downloadingTiles[tileKey] = true;
-
-    // Start downloading the tile
-    _downloadTile(url, file, tileKey).then((_) {
-      _downloadingTiles.remove(tileKey);
-    }).catchError((e) {
-      debugPrint('Error downloading tile $tileKey: $e');
-      _downloadingTiles.remove(tileKey);
-    });
-
-    return NetworkImage(url);
-  }
-
-  Future<void> _downloadTile(String url, File file, String tileKey) async {
-    try {
-      if (!await file.exists()) {
-        final request = await _httpClient.getUrl(Uri.parse(url));
-        final response = await request.close();
-        if (response.statusCode == 200) {
-          final bytes = await consolidateHttpClientResponseBytes(response);
-          await file.writeAsBytes(bytes);
-        }
-      }
-    } catch (e) {
-      debugPrint('Error downloading tile $tileKey: $e');
-      rethrow;
-    }
-  }
-
-  @override
-  Future<Uint8List> getTileBytes(
-      TileCoordinates coordinates, TileLayer options) async {
-    final file = _getTileFile(coordinates);
-    final tileKey = _getTileKey(coordinates);
-
-    try {
-      if (await file.exists()) {
-        return await file.readAsBytes();
-      }
-
-      final url = options.urlTemplate!
-          .replaceAll('{z}', coordinates.z.toString())
-          .replaceAll('{x}', coordinates.x.toString())
-          .replaceAll('{y}', coordinates.y.toString())
-          .replaceAll(
-              '{accessToken}', options.additionalOptions?['accessToken'] ?? '');
-
-      final request = await _httpClient.getUrl(Uri.parse(url));
-      final response = await request.close();
-
-      if (response.statusCode != 200) {
-        throw Exception('Failed to download tile: ${response.statusCode}');
-      }
-
-      final bytes = await consolidateHttpClientResponseBytes(response);
-      await file.writeAsBytes(bytes);
-      return bytes;
-    } catch (e) {
-      debugPrint('Error getting tile bytes for $tileKey: $e');
-      rethrow;
-    }
   }
 }
