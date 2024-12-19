@@ -14,4 +14,7 @@ class UserUseCase {
 
   Future<Either<Failure, bool>> tryLogOut() async =>
       await _repository.tryLogOut();
+
+  Future<Either<Failure, UserEntity>> getCurrentUser() async =>
+      await _repository.getCurrentUser();
 }

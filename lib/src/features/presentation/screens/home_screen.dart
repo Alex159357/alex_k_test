@@ -59,7 +59,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _authBodyBuilder(BuildContext context, UserState state) =>
       switch (state.authState) {
         UnAuthenticated() => const AuthView(),
-        Authenticated() => const MainView(),
+        Authenticated() =>  const MainView(),
       };
 
   //control of conditions

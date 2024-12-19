@@ -8,7 +8,7 @@ extension OnMapPinBloc on MapPinBloc {
 
   void restoreScreenState() => add(const RestoreScreenState());
 
-  void setPinInfo(double? lat, double? lng, double? id) =>
+  void setPinInfo(double? lat, double? lng, int? id) =>
       add(OnSetNewPin(id, lat, lng));
 
   void pinNameChanged(String name) => add(OnPinNameChanged(name));

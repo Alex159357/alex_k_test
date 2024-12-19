@@ -11,7 +11,7 @@ import 'package:alex_k_test/src/core/utils/shared_preferanse/secure_storage.dart
 import 'package:alex_k_test/src/features/data/datasources/local/local_data_source_impl.dart';
 import 'package:alex_k_test/src/features/data/datasources/local/local_data_sourse.dart';
 import 'package:alex_k_test/src/features/data/datasources/remote/remote_data_source.dart';
-import 'package:alex_k_test/src/features/data/datasources/remote/remote_data_sourse_impl.dart';
+import 'package:alex_k_test/src/features/data/datasources/remote/remote_data_source_impl.dart';
 import 'package:alex_k_test/src/features/data/repositories/map_pin_repository_impl.dart';
 import 'package:alex_k_test/src/features/data/repositories/sync_queue_repository_impl.dart';
 import 'package:alex_k_test/src/features/data/repositories/user_repository_impl.dart';
@@ -22,82 +22,146 @@ import 'package:alex_k_test/src/features/domain/usecases/pin_usecase.dart';
 import 'package:alex_k_test/src/features/domain/usecases/sync_queue_usecase.dart';
 import 'package:alex_k_test/src/features/domain/usecases/user_usecase.dart';
 import 'package:alex_k_test/src/features/presentation/blocs/add_map_pin/bloc.dart';
+import 'package:alex_k_test/src/features/presentation/blocs/sync/bloc.dart';
 import 'package:alex_k_test/src/features/presentation/blocs/user/bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:get_it/get_it.dart';
+import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-late GetIt getIt;
-
 class InjectionContainer {
-  Future<void> init() async {
-    getIt = GetIt.instance;
-    await _initFirebase();
-    _initBlocs();
-    _initUseCases();
-    _initRepositories();
-    _initTools();
-    await _initData();
+  static final InjectionContainer _instance = InjectionContainer._internal();
+  final Logger _logger = Logger();
+  late GetIt _getIt;
+
+  factory InjectionContainer() {
+    return _instance;
   }
 
-  static InjectionContainer get instance => InjectionContainer();
+  InjectionContainer._internal();
+
+  static InjectionContainer get instance => _instance;
+  GetIt get getIt => _getIt;
+
+  Future<void> init() async {
+    try {
+      _getIt = GetIt.instance;
+
+      // Core dependencies
+      await _initFirebase();
+      await _initCore();
+
+      // Data layer
+      await _initDataSources();
+      _initRepositories();
+
+      // Domain layer
+      _initUseCases();
+
+      // Presentation layer
+      _initBlocs();
+
+      _logger.i('Dependency injection initialized successfully');
+    } catch (e, stackTrace) {
+      _logger.e(
+        'Failed to initialize dependency injection',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      rethrow;
+    }
+  }
 
   Future<void> _initFirebase() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    getIt.registerLazySingleton(() => FirebaseAuth.instance);
-    getIt.registerLazySingleton(() => FirebaseFirestore.instance);
+    _getIt.registerLazySingleton(() => FirebaseAuth.instance);
+    _getIt.registerLazySingleton(() => FirebaseFirestore.instance);
   }
 
-  void _initBlocs() {
-    getIt.registerLazySingleton<UserBloc>(() => UserBloc(getIt(), getIt()));
-    getIt.registerLazySingleton<MapPinBloc>(() => MapPinBloc(getIt()));
+  Future<void> _initCore() async {
+    // Network
+    _getIt.registerLazySingleton(() => Connectivity());
+    _getIt.registerLazySingleton(() => NetworkInfo(_getIt()));
+
+    // Storage
+    await _initStorage();
+
+    // Utils
+    _getIt.registerLazySingleton(() => PermissionsHandler());
+    _getIt.registerLazySingleton(() => UniversalMapper());
+    _getIt.registerLazySingleton(() => MapPinMapper());
   }
 
-  void _initUseCases() {
-    getIt.registerLazySingleton(() => UserUseCase(getIt()));
-    getIt.registerLazySingleton(() => PinUseCase(getIt()));
-    getIt.registerLazySingleton(() => SyncQueueUseCase(getIt()));
+  Future<void> _initStorage() async {
+    _getIt.registerSingletonAsync<SharedPreferences>(
+      () => SharedPreferences.getInstance(),
+    );
+    await _getIt.isReady<SharedPreferences>();
+    _getIt.registerLazySingleton(() => SecureStorageController(_getIt()));
+  }
+
+  Future<void> _initDataSources() async {
+    // Database
+    _getIt.registerLazySingleton(() => DatabaseHelper());
+    _getIt.registerLazySingleton(() => UserDatabase(_getIt()));
+    _getIt.registerLazySingleton(() => MapPinDatabase(_getIt()));
+    _getIt.registerLazySingleton(() => SyncQueueDatabase(_getIt()));
+
+    // Remote and Local data sources
+    _getIt.registerLazySingleton<RemoteDataSource>(
+      () => RemoteDataSourceImpl(
+        authClient: _getIt<FirebaseAuth>(),
+        firestore: _getIt<FirebaseFirestore>(),
+      ),
+    );
+    _getIt.registerLazySingleton<LocalDataSource>(
+      () => LocalDataSourceImpl(_getIt(), _getIt(), _getIt()),
+    );
   }
 
   void _initRepositories() {
-    getIt.registerLazySingleton<UserRepository>(
-        () => UserRepositoryImpl(getIt(), getIt(), getIt(), getIt()));
-
-    getIt.registerLazySingleton<MapPinsRepository>(
-        () => MapPinRepositoryImpl(getIt(), getIt()));
-
-    getIt.registerLazySingleton<SyncQueueRepository>(
-        () => SyncQueueRepositoryImpl(getIt()));
+    _getIt.registerLazySingleton<UserRepository>(
+      () => UserRepositoryImpl(_getIt(), _getIt(), _getIt(), _getIt()),
+    );
+    _getIt.registerLazySingleton<MapPinsRepository>(
+      () => MapPinRepositoryImpl(_getIt(), _getIt()),
+    );
+    _getIt.registerLazySingleton<SyncQueueRepository>(
+      () => SyncQueueRepositoryImpl(
+        _getIt<SyncQueueDatabase>(),
+        _getIt<RemoteDataSource>(),
+        _getIt<UniversalMapper>(),
+        _getIt<LocalDataSource>(),
+      ),
+    );
   }
 
-  void _initTools() {
-    getIt.registerLazySingleton(() => Connectivity());
-    getIt.registerLazySingleton(() => NetworkInfo(getIt()));
-    getIt.registerSingletonAsync<SharedPreferences>(
-      () async => await SharedPreferences.getInstance(),
-    );
-    getIt.registerLazySingleton(() => SecureStorageController(getIt()));
-    getIt.registerLazySingleton(() => PermissionsHandler());
+  void _initUseCases() {
+    _getIt.registerLazySingleton(() => UserUseCase(_getIt()));
+    _getIt.registerLazySingleton(() => PinUseCase(_getIt()));
+    _getIt.registerLazySingleton(() => SyncQueueUseCase(_getIt()));
   }
 
-  Future<void> _initData() async {
-    getIt.registerLazySingleton(() => DatabaseHelper());
-    getIt.registerLazySingleton(() => UserDatabase(getIt()));
-    getIt.registerLazySingleton(() => MapPinDatabase(getIt()));
-    getIt.registerLazySingleton(() => SyncQueueDatabase(getIt()));
-    getIt.registerLazySingleton(() => UniversalMapper());
-    getIt.registerLazySingleton(() => MapPinMapper());
-    getIt.registerLazySingleton<RemoteDataSource>(
-      () => RemoteDataSourceImpl(authClient: getIt<FirebaseAuth>()),
-    );
-    getIt.registerLazySingleton<LocalDataSource>(
-        () => LocalDataSourceImpl(getIt(), getIt(), getIt()));
+  void _initBlocs() {
+    _getIt.registerLazySingleton<UserBloc>(() => UserBloc(_getIt(), _getIt()));
+    _getIt.registerLazySingleton<MapPinBloc>(() => MapPinBloc(
+          _getIt<PinUseCase>(),
+          _getIt<SyncQueueUseCase>(),
+          _getIt<MapPinMapper>(),
+          _getIt<UserUseCase>(),
+        ));
+    _getIt.registerLazySingleton<SyncBloc>(() => SyncBloc(_getIt()));
+  }
+
+  Future<void> dispose() async {
+    await _getIt.reset();
+    _logger.i('Dependency injection disposed');
   }
 }
 
-final injector = InjectionContainer.instance;
+final injector = InjectionContainer();

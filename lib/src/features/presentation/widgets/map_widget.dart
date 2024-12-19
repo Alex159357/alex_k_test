@@ -15,7 +15,7 @@ class MapWidget extends StatefulWidget {
   final double userLng;
   final List<MapPinEntity> pins;
   final Function(double lat, double lng) onMapTap;
-  final Function(double? id)? onPinTap;
+  final Function(int? id)? onPinTap;
   final double initialZoom;
 
   const MapWidget({
@@ -40,8 +40,8 @@ class _MapWidgetState extends State<MapWidget> {
   TileProvider? _tileProvider;
 
   // Define map bounds for San Francisco area
-  static final LatLng _swBound = LatLng(37.6, -122.6);
-  static final LatLng _neBound = LatLng(37.9, -122.2);
+  static const LatLng _swBound = LatLng(37.6, -122.6);
+  static const LatLng _neBound = LatLng(37.9, -122.2);
 
   @override
   void initState() {
@@ -194,10 +194,17 @@ class _MapWidgetState extends State<MapWidget> {
               },
               child: Column(
                 children: [
-                  Icon(
-                    Icons.location_pin,
-                    color: Theme.of(context).primaryColor,
-                    size: 60,
+                  Badge(
+                    isLabelVisible: pin.firebaseId == null,
+                    smallSize: 6,
+                    largeSize: 16,
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    label: const Icon(Icons.sync_disabled, color: Colors.white,),
+                    child: Icon(
+                      Icons.location_pin,
+                      color: Theme.of(context).primaryColor,
+                      size: 60,
+                    ),
                   ),
                   if (pin.label.isNotEmpty)
                     Container(

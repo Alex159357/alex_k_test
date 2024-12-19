@@ -11,9 +11,9 @@ SyncQueueModel _$SyncQueueModelFromJson(Map<String, dynamic> json) =>
       id: (json['id'] as num?)?.toInt(),
       type: json['type'] as String,
       data: json['data'] as String,
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      isSynced: json['isSynced'] as bool? ?? false,
-      error: json['error'] as String?,
+      createdAt: json['createdAt'] == null
+          ? null
+          : DateTime.parse(json['createdAt'] as String),
     );
 
 Map<String, dynamic> _$SyncQueueModelToJson(SyncQueueModel instance) =>
@@ -22,6 +22,4 @@ Map<String, dynamic> _$SyncQueueModelToJson(SyncQueueModel instance) =>
       'type': instance.type,
       'data': instance.data,
       'createdAt': instance.createdAt.toIso8601String(),
-      'isSynced': instance.isSynced,
-      'error': instance.error,
     };

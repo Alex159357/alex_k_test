@@ -11,7 +11,8 @@ class LocalDataSourceImpl implements LocalDataSource {
   final MapPinDatabase _mapPinDatabase;
   final UniversalMapper _universalMapper;
 
-  LocalDataSourceImpl(this._userDatabase, this._mapPinDatabase, this._universalMapper);
+  LocalDataSourceImpl(
+      this._userDatabase, this._mapPinDatabase, this._universalMapper);
 
   @override
   Future<void> deleteUser(UserModel userModel) async =>
@@ -19,7 +20,7 @@ class LocalDataSourceImpl implements LocalDataSource {
 
   @override
   Future<UserModel?> readUser() async {
-    final  result = await _userDatabase.getUser();
+    final result = await _userDatabase.getUser();
     return await _universalMapper.tryMap<UserModel>(result, UserModel.fromJson);
   }
 
@@ -31,31 +32,44 @@ class LocalDataSourceImpl implements LocalDataSource {
   @override
   Future<List<MapPinModel>?> readMapPins() async {
     final result = await _mapPinDatabase.readMapPins();
-    final mapResult = await _universalMapper.tryMapList<MapPinModel>(result, MapPinModel.fromJson);
+    final mapResult = await _universalMapper.tryMapList<MapPinModel>(
+        result, MapPinModel.fromJson);
     return mapResult?.removeNulls();
   }
 
   @override
   Future<List<MapPinModel>?> saveMapPin(MapPinModel mapPinModel) async {
     final result = await _mapPinDatabase.insertMapPin(mapPinModel);
-    if(result) {
-      final mapResult = await _universalMapper.tryMapList<MapPinModel>(result, MapPinModel.fromJson);
-      return mapResult?.removeNulls() ?? [];
+    if (result) {
+      // After successful insert, read all pins and return them
+      return await readMapPins();
     }
     return null;
   }
 
   @override
-  Future<MapPinModel?> readMapPinByLatLng(double lat, double lng)async {
+  Future<bool> updateMapPin(MapPinModel mapPinModel) async {
+    print("UpdatePin -> ${mapPinModel.id}");
+    if (mapPinModel.id == null) {
+      return false;
+    }
+    final result = await _mapPinDatabase.updateMapPin(mapPinModel);
+    return result;
+  }
+
+  @override
+  Future<MapPinModel?> readMapPinByLatLng(double lat, double lng) async {
     final result = await _mapPinDatabase.readMapPinByLatLng(lat, lng);
-      final mapResult = await _universalMapper.tryMap<MapPinModel>(result, MapPinModel.fromJson);
-      return mapResult;
+    final mapResult = await _universalMapper.tryMap<MapPinModel>(
+        result, MapPinModel.fromJson);
+    return mapResult;
   }
 
   @override
   Stream<List<MapPinModel>?> observeMapPins() async* {
-    yield* _mapPinDatabase.observeAllPins().asyncMap((e) async{
-      final mapResult = await _universalMapper.tryMapList<MapPinModel>(e, MapPinModel.fromJson);
+    yield* _mapPinDatabase.observeAllPins().asyncMap((e) async {
+      final mapResult = await _universalMapper.tryMapList<MapPinModel>(
+          e, MapPinModel.fromJson);
       return mapResult?.removeNulls();
     });
   }

@@ -10,31 +10,28 @@ class InitEvent extends MapPinEvent {
   const InitEvent();
 }
 
-class ClearCurrentPinData extends MapPinEvent{
-
+class ClearCurrentPinData extends MapPinEvent {
   const ClearCurrentPinData();
 }
 
-class RestoreScreenState extends MapPinEvent{
-
+class RestoreScreenState extends MapPinEvent {
   const RestoreScreenState();
 }
 
-
-class OnError extends MapPinEvent{
+class OnError extends MapPinEvent {
   final String message;
 
   const OnError(this.message);
 }
 
-class OnPinsLoadedSuccessFully extends MapPinEvent{
+class OnPinsLoadedSuccessFully extends MapPinEvent {
   final List<MapPinEntity> pins;
 
   const OnPinsLoadedSuccessFully(this.pins);
 }
 
 class OnSetNewPin extends MapPinEvent {
-  final double? id;
+  final int? id;
   final double? lat;
   final double? lng;
 

@@ -41,6 +41,8 @@ class LabelsTexts{
   final String logOut;
   final String pinName;
   final String comments;
+  final String sync;
+  final String unSyncedItems;
 
   const LabelsTexts({
     this.demoUser = "Demo User",
@@ -48,6 +50,8 @@ class LabelsTexts{
     this.logOut = "Log Out",
     this.pinName = "Pin Name",
     this.comments = "Comments",
+    this.sync = "Sync",
+    this.unSyncedItems = "Un Synced Items",
   });
 }
 

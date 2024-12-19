@@ -14,8 +14,8 @@ class UserState {
   const UserState(
       {this.screenState = const InitialScreenState(),
       this.authState = const UnAuthenticated(),
-      this.email = "",
-      this.password = "",
+      this.email = "alex_karpov@asd.asd",
+      this.password = "159357",
       this.passwordVisibilityState = true});
 
   bool get isFormValid => email.isEmail && password.length >= 6;

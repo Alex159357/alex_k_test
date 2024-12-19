@@ -6,13 +6,11 @@ part 'sync_queue_model.g.dart';
 
 @JsonSerializable()
 class SyncQueueModel extends SyncQueueEntity implements SerializedModel {
-  const SyncQueueModel({
+  SyncQueueModel({
     super.id,
     required super.type,
     required super.data,
-    required super.createdAt,
-    super.isSynced,
-    super.error,
+    super.createdAt,
   });
 
   factory SyncQueueModel.fromJson(Map<String, dynamic> json) =>

@@ -19,12 +19,27 @@ class DatabaseHelper {
     final String path = join(await getDatabasesPath(), 'alex_test_app.db');
     return await openDatabase(
       path,
-      version: 1,
+      version: 4, // Increased version to add userId field
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
     );
   }
 
   Future<void> _onCreate(Database db, int version) async {
+    await _createTables(db);
+  }
+
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    // Drop existing tables
+    await db.execute('DROP TABLE IF EXISTS map_pins');
+    await db.execute('DROP TABLE IF EXISTS user');
+    await db.execute('DROP TABLE IF EXISTS sync_queue');
+
+    // Recreate tables with new schema
+    await _createTables(db);
+  }
+
+  Future<void> _createTables(Database db) async {
     await db.execute('''
     CREATE TABLE user(
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -39,11 +54,23 @@ class DatabaseHelper {
       latitude REAL NOT NULL,
       longitude REAL NOT NULL,
       label TEXT NOT NULL,
-      comments TEXT
+      comments TEXT,
+      firebaseId TEXT,
+      userId TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+''');
+
+    await db.execute('''
+    CREATE TABLE sync_queue (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      type TEXT NOT NULL,
+      data TEXT NOT NULL,
+      createdAt TEXT NOT NULL
     )
 ''');
   }
-
 
   Future<void> close() async {
     final db = await database;

@@ -1,6 +1,7 @@
 import 'package:alex_k_test/src/config/constaints/texts.dart';
 import 'package:alex_k_test/src/core/exceptions/context.dart';
 import 'package:alex_k_test/src/core/exceptions/on_map_pin_bloc.dart';
+import 'package:alex_k_test/src/core/exceptions/on_sync_bloc.dart';
 import 'package:alex_k_test/src/features/domain/states/general_screen_state.dart';
 import 'package:alex_k_test/src/features/presentation/blocs/add_map_pin/bloc.dart';
 import 'package:alex_k_test/src/features/presentation/blocs/add_map_pin/state.dart';
@@ -23,6 +24,7 @@ class _MainViewState extends State<MainView> {
   @override
   void initState() {
     context.mapPinBloc.init();
+    context.syncBloc.init();
     super.initState();
   }
 
@@ -31,7 +33,7 @@ class _MainViewState extends State<MainView> {
         args: {"latitude": lat, "longitude": lng});
   }
 
-  void _handlePinTap(double? id) {
+  void _handlePinTap(int? id) {
     context.pushNamed(AddEditPinScreen.routeLocation, args: {"pin_id": id});
   }
 
@@ -50,6 +52,7 @@ class _MainViewState extends State<MainView> {
 
   //Builders
   Widget _getMapBodyBuilder(BuildContext context, MapPinState state) {
+    print("MapWidgetUpdated -");
     if (state.generalScreenState is ErrorScreenState) {
       return ErrorView(
         message: (state.generalScreenState as ErrorScreenState).message,
@@ -58,6 +61,7 @@ class _MainViewState extends State<MainView> {
         },
       );
     }
+
     return MapWidget(
       userLat: 37.7749,
       userLng: -122.4194,

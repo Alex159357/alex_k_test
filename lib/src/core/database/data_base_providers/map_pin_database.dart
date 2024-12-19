@@ -23,7 +23,7 @@ class MapPinDatabase {
     try {
       final db = await _databaseHelper.database;
       final result = await db.query('map_pins');
-      _logger.d('Read map pins from database: $result'); // Log the raw data
+      _logger.d('Read map pins from database: $result');
       return result;
     } catch (e, t) {
       _logger.e("Error reading map pins", error: e, stackTrace: t);
@@ -87,7 +87,12 @@ class MapPinDatabase {
     try {
       final db = await _databaseHelper.database;
       final json = pin.toJson();
-      _logger.d('Inserting map pin: $json'); // Log the data being inserted
+      _logger.d('Inserting map pin: $json');
+
+      // Remove id if it's null to let SQLite auto-generate it
+      if (json['id'] == null) {
+        json.remove('id');
+      }
 
       final result = await db.insert(
         'map_pins',
@@ -106,6 +111,35 @@ class MapPinDatabase {
     }
   }
 
+  Future<bool> updateMapPin(MapPinModel pin) async {
+    try {
+      if (pin.id == null) {
+        _logger.e("Cannot update pin without ID");
+        return false;
+      }
+
+      final db = await _databaseHelper.database;
+      final json = pin.toJson();
+      _logger.d('Updating map pin: $json');
+
+      final result = await db.update(
+        'map_pins',
+        json,
+        where: 'id = ?',
+        whereArgs: [pin.id],
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+      _onDatabaseUpdated();
+      if (result > 0) {
+        return true;
+      }
+      return false;
+    } catch (e, t) {
+      _logger.e("Error updating map pin", error: e, stackTrace: t);
+      return false;
+    }
+  }
+
   Future<bool> insertMapPins(List<MapPinModel> pins) async {
     try {
       final db = await _databaseHelper.database;
@@ -113,8 +147,10 @@ class MapPinDatabase {
 
       for (final pin in pins) {
         final json = pin.toJson();
-        _logger
-            .d('Batch inserting map pin: $json'); // Log each pin being inserted
+        if (json['id'] == null) {
+          json.remove('id');
+        }
+        _logger.d('Batch inserting map pin: $json');
         batch.insert(
           'map_pins',
           json,
@@ -135,8 +171,7 @@ class MapPinDatabase {
     try {
       final db = await _databaseHelper.database;
       final result = await db.query('map_pins');
-      _logger
-          .d('Database updated, new state: $result'); // Log the updated state
+      _logger.d('Database updated, new state: $result');
       _pinsSubject.add(result);
     } catch (e, t) {
       _logger.e("Error updating pins subject", error: e, stackTrace: t);

@@ -24,6 +24,21 @@ class UserRepositoryImpl implements UserRepository {
   );
 
   @override
+  Future<Either<Failure, UserEntity>> getCurrentUser() async {
+    try {
+      final dbUser = await _localDataSource.readUser();
+      if (dbUser == null) {
+        return Left(FailureHandler("UserRepository")
+            .logError("getCurrentUser", "No user found"));
+      }
+      return Right(dbUser);
+    } catch (e, stackTrace) {
+      return Left(FailureHandler("UserRepository").logError(
+          "getCurrentUser", "Failed to get current user", e, stackTrace));
+    }
+  }
+
+  @override
   Future<Either<Failure, UserEntity>> tryAuth(
       String? email, String? password) async {
     try {
@@ -38,16 +53,16 @@ class UserRepositoryImpl implements UserRepository {
       if (e is FirebaseAuthException) {
         return Left(_handleFirebaseAuthError(e));
       }
-      return Left(
-          FailureHandler("UserRepository").logError("tryAuth", "Unknown Error", e, stackTrace));
+      return Left(FailureHandler("UserRepository")
+          .logError("tryAuth", "Unknown Error", e, stackTrace));
     }
   }
 
   Future<Either<Failure, UserEntity>> _handleOfflineAuth() async {
     final dbUser = await _localDataSource.readUser();
     if (dbUser == null) {
-      return Left(FailureHandler("UserRepository")
-          .logError("_handleOfflineAuth","No cached user data available while offline"));
+      return Left(FailureHandler("UserRepository").logError(
+          "_handleOfflineAuth", "No cached user data available while offline"));
     }
     if (dbUser.id < 0) {
       return Left(FailureHandler("UserRepository")
@@ -78,8 +93,8 @@ class UserRepositoryImpl implements UserRepository {
         await _saveCredentials(cleanEmail, cleanPassword, authResult);
         return Right(authResult);
       }
-      return Left(
-          FailureHandler("UserRepository").logError("Authentication failed", "Auth Failed"));
+      return Left(FailureHandler("UserRepository")
+          .logError("Authentication failed", "Auth Failed"));
     } on FirebaseAuthException catch (e) {
       return Left(_handleFirebaseAuthError(e));
     }
@@ -120,7 +135,8 @@ class UserRepositoryImpl implements UserRepository {
       default:
         message = 'Authentication error: ${e.message}';
     }
-    return FailureHandler("UserRepository").logError("_handleFirebaseAuthError", message);
+    return FailureHandler("UserRepository")
+        .logError("_handleFirebaseAuthError", message);
   }
 
   @override
@@ -131,8 +147,8 @@ class UserRepositoryImpl implements UserRepository {
         await _clearLocalData();
         return const Right(true);
       }
-      return Left(
-          FailureHandler("UserRepository").logError("tryLogOut", "Failed to log out"));
+      return Left(FailureHandler("UserRepository")
+          .logError("tryLogOut", "Failed to log out"));
     } catch (e, stackTrace) {
       return Left(FailureHandler("UserRepository")
           .logError("tryLogOut", "Failed to log out", e, stackTrace));

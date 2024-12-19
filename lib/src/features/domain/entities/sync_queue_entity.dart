@@ -5,18 +5,28 @@ class SyncQueueEntity extends Equatable {
   final String type;
   final String data;
   final DateTime createdAt;
-  final bool isSynced;
-  final String? error;
 
-  const SyncQueueEntity({
+  SyncQueueEntity({
     this.id,
     required this.type,
     required this.data,
-    required this.createdAt,
-    this.isSynced = false,
-    this.error,
-  });
+    DateTime? createdAt,
+  }) : createdAt = createdAt ?? DateTime.now();
+
+  SyncQueueEntity copyWith({
+    int? id,
+    String? type,
+    String? data,
+    DateTime? createdAt,
+  }) {
+    return SyncQueueEntity(
+      id: id ?? this.id,
+      type: type ?? this.type,
+      data: data ?? this.data,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
 
   @override
-  List<Object?> get props => [id, type, data, createdAt, isSynced, error];
+  List<Object?> get props => [id, type, data, createdAt];
 }
