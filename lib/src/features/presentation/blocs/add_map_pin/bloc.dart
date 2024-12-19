@@ -40,16 +40,15 @@ class MapPinBloc extends Bloc<MapPinEvent, MapPinState> {
   final MapPinMapper _mapPinMapper;
   final UserUseCase _userUseCase;
 
-  StreamSubscription? _pinsSubscription;
+  late StreamSubscription _pinsSubscription;
 
   @override
   Future<void> close() {
-    _pinsSubscription?.cancel();
+    _pinsSubscription.cancel();
     return super.close();
   }
 
   void _init(InitEvent event, Emitter<MapPinState> emit) async {
-    _pinsSubscription?.cancel();
     _pinsSubscription = _pinUseCase.observeAllPins().listen((e) {
       e.fold(_handlePinLoadError, _pinLoadedSuccessfully);
     });

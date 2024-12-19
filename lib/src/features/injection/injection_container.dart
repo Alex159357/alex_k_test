@@ -20,6 +20,7 @@ import 'package:alex_k_test/src/features/domain/repositories/map_pins_repository
 import 'package:alex_k_test/src/features/domain/repositories/sync_queue_repository.dart';
 import 'package:alex_k_test/src/features/domain/repositories/user_repository.dart';
 import 'package:alex_k_test/src/features/domain/usecases/location_usecase.dart';
+import 'package:alex_k_test/src/features/domain/usecases/network_usecase.dart';
 import 'package:alex_k_test/src/features/domain/usecases/pin_usecase.dart';
 import 'package:alex_k_test/src/features/domain/usecases/sync_queue_usecase.dart';
 import 'package:alex_k_test/src/features/domain/usecases/user_usecase.dart';
@@ -149,6 +150,7 @@ class InjectionContainer {
     _getIt.registerLazySingleton(() => PinUseCase(_getIt()));
     _getIt.registerLazySingleton(() => SyncQueueUseCase(_getIt()));
     _getIt.registerLazySingleton(() => LocationUseCase(_getIt()));
+    _getIt.registerLazySingleton(() => NetworkUseCase(_getIt()));
   }
 
   void _initBlocs() {
@@ -159,7 +161,7 @@ class InjectionContainer {
           _getIt<MapPinMapper>(),
           _getIt<UserUseCase>(),
         ));
-    _getIt.registerLazySingleton<SyncBloc>(() => SyncBloc(_getIt()));
+    _getIt.registerLazySingleton<SyncBloc>(() => SyncBloc(_getIt(), _getIt()));
   }
 
   Future<void> dispose() async {
