@@ -355,7 +355,7 @@ class _MapWidgetState extends State<MapWidget> with TickerProviderStateMixin {
 
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(60.0),
+        preferredSize: const Size.fromHeight(60.0),
         child: AppBar(
           bottom: _buildTabBar(),
         ),

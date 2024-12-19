@@ -1,5 +1,8 @@
 # Flutter Map Pin Sync App
 
+## Test Apk Link
+https://drive.google.com/file/d/17T71rQRghh92pxJH1zmp2zUovHpla1_r/view?usp=sharing
+
 ## Running the App with Environment Variables
 
 To run the app with the required API keys, use the following command:
@@ -10,7 +13,7 @@ flutter run --dart-define=map_box_api_key=your_api_key_here
 
 For example:
 ```bash
-flutter run --dart-define=map_box_api_key=pk.eyJ1IjoiYWxleC1rYXJwb3YxNTkzNTciLCJhIjoiY200cGtiemc2MHV2YTJrczdldDZpa3FlYyJ9.a-Y7U6beAoO35uVB8Ek9FQ
+flutter run --dart-define=map_box_api_key=pk....
 ```
 
 This will provide the API key to the app at runtime through the String.fromEnvironment method:
@@ -24,23 +27,6 @@ class ApiKeys {
 You can also add multiple environment variables:
 ```bash
 flutter run --dart-define=map_box_api_key=your_key --dart-define=other_api_key=another_key
-```
-
-For VS Code users, you can add this configuration to your launch.json:
-```json
-{
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Flutter",
-            "request": "launch",
-            "type": "dart",
-            "args": [
-                "--dart-define=map_box_api_key=your_api_key_here"
-            ]
-        }
-    ]
-}
 ```
 
 ## Features

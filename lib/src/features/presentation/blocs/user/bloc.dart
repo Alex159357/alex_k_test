@@ -51,6 +51,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     final permissionResult = await _permissionsHandler.getLocationPermissionsStatus();
     if(permissionResult){
       _locationUseCase.observeLocation().listen((e){
+        print("MyLocation -> ${e.lng}");
         add(OnUserLocationChanged(e));
       });
     }
@@ -106,7 +107,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
 
   FutureOr<void> _onLoginPressed(
       OnLoginPressed event, Emitter<UserState> emit) async {
-    if (!_validateCredentials(state.email, state.password)) {
+    if (state.isFormValid) {
       emit(state.copyWith(
         screenState:
             const ErrorScreenState("Please enter valid email and password"),
@@ -141,27 +142,6 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     );
   }
 
-  bool _validateCredentials(String? email, String? password) {
-    if (email == null ||
-        email.isEmpty ||
-        password == null ||
-        password.isEmpty) {
-      return false;
-    }
-
-    // Basic email validation
-    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-    if (!emailRegex.hasMatch(email)) {
-      return false;
-    }
-
-    // Basic password validation (at least 6 characters)
-    if (password.length < 6) {
-      return false;
-    }
-
-    return true;
-  }
 
   void logOut() {
     add(const OnLogoutPressed());
