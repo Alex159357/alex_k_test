@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:flutter/material.dart';
 
 class GeneralTextField extends StatefulWidget {
   final String hintText; // Text to display as the hint

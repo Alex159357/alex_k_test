@@ -53,7 +53,7 @@ FutureOr<List<T>> runMapperList<T extends SerializedModel>(
 
   try {
     if (rawDataList == null) return [];
-    print("MappedElement -> ${rawDataList}");
+    print("MappedElement -> $rawDataList");
     return rawDataList.map((rawData) => fromJsonFunction(rawData)).toList();
   } catch (e, t) {
     Logger().e("Error mapping list of users", error: e, stackTrace: t);

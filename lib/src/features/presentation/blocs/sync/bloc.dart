@@ -36,7 +36,7 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
   void _runSyncProcess(){
     _syncQueueUseCase.processQueueItems(
         onProgressUpdate: (progress) {
-          print("SyncProgress -> ${progress}");
+          print("SyncProgress -> $progress");
         },
         onItemProcessed: (SyncQueueEntity) {},
         onComplete: () {

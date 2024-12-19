@@ -171,7 +171,7 @@ class _AddEditPinScreenState extends State<AddEditPinScreen> {
                   ),
                 ),
               )
-              .toList(),
+              ,
         ],
       ),
     );

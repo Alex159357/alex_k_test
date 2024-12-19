@@ -12,7 +12,7 @@ class GeneralPrimaryButton extends StatelessWidget {
   final bool enabled;
 
   const GeneralPrimaryButton({
-    Key? key,
+    super.key,
     required this.text,
     required this.onPressed,
     this.backgroundColor = Colors.blue,
@@ -20,7 +20,7 @@ class GeneralPrimaryButton extends StatelessWidget {
     this.borderRadius = 12.0,
     this.elevation = 4.0,
     this.enabled = true,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

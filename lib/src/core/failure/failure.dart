@@ -21,12 +21,12 @@ class FailureHandler {
 
   FailureHandler(this._tag);
 
-  Unfulfilled logUnfulfilled(String methodName, [dynamic e, StackTrace? t = null]) {
+  Unfulfilled logUnfulfilled(String methodName, [dynamic e, StackTrace? t]) {
     Logger().i("Info in $_tag", error: e, stackTrace: t);
     return Unfulfilled(e.toString());
   }
 
-  Failure logError(String methodName, String message, [dynamic e, StackTrace? t = null]) {
+  Failure logError(String methodName, String message, [dynamic e, StackTrace? t]) {
     Logger().e("Error in $_tag", error: e, stackTrace: t);
     return MessageFailure(message);
   }

@@ -1,7 +1,6 @@
 
 
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -47,7 +46,7 @@ class CustomTileProvider extends TileProvider {
         .replaceAll('{x}', coordinates.x.toString())
         .replaceAll('{y}', coordinates.y.toString())
         .replaceAll(
-        '{accessToken}', options.additionalOptions?['accessToken'] ?? '');
+        '{accessToken}', options.additionalOptions['accessToken'] ?? '');
 
     _downloadingTiles[tileKey] = true;
 
@@ -94,7 +93,7 @@ class CustomTileProvider extends TileProvider {
           .replaceAll('{x}', coordinates.x.toString())
           .replaceAll('{y}', coordinates.y.toString())
           .replaceAll(
-          '{accessToken}', options.additionalOptions?['accessToken'] ?? '');
+          '{accessToken}', options.additionalOptions['accessToken'] ?? '');
 
       final request = await _httpClient.getUrl(Uri.parse(url));
       final response = await request.close();

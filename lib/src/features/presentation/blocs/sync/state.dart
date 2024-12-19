@@ -1,4 +1,3 @@
-import 'package:alex_k_test/src/features/domain/entities/sync_queue_entity.dart';
 
 class SyncState {
   bool isLoading;

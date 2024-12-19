@@ -1,7 +1,6 @@
 
 
 
-import 'package:alex_k_test/src/core/exceptions/context.dart';
 import 'package:flutter/material.dart';
 
 class GeneralGradientWrapper extends StatelessWidget {
@@ -11,7 +10,7 @@ class GeneralGradientWrapper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,

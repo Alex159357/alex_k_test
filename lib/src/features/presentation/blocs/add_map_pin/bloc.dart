@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:alex_k_test/src/config/constaints/texts.dart';
 import 'package:alex_k_test/src/core/failure/failure.dart';
 import 'package:alex_k_test/src/core/utils/mappers/map_pin_mapper.dart';
 import 'package:alex_k_test/src/features/domain/entities/map_pin_entity.dart';

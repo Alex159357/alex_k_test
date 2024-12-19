@@ -1,9 +1,7 @@
 import 'dart:io';
 import 'dart:math';
-import 'dart:typed_data';
 import 'package:alex_k_test/src/features/domain/entities/map_pin_entity.dart';
 import 'package:alex_k_test/src/features/presentation/providers/custom_tile_provider.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -99,7 +97,7 @@ class _MapWidgetState extends State<MapWidget> {
 
           final url =
               'https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/$zoom/$x/$y?access_token=${ApiKeys.mapboxAccessToken}';
-          final file = File('${_cacheDir.path}/${zoom}_${x}_${y}.png');
+          final file = File('${_cacheDir.path}/${zoom}_${x}_$y.png');
 
           try {
             if (!await file.exists()) {

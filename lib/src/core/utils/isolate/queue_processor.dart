@@ -61,15 +61,13 @@ class QueueProcessor {
           final progress = ((i + 1) / totalItems) * 100;
 
           // Process the queue item
-          final MapPinModel? fromSync =
+          final MapPinModel fromSync =
               MapPinModel.fromJson(jsonDecode(item.data));
-          if (fromSync != null) {
-            // Send progress update
-            data.sendPort.send(progress);
-            // Send processed item
-            data.sendPort.send(item);
-          }
-
+          // Send progress update
+          data.sendPort.send(progress);
+          // Send processed item
+          data.sendPort.send(item);
+        
           // Add small delay to prevent overwhelming the main thread
           await Future.delayed(const Duration(milliseconds: 100));
         } catch (e) {
