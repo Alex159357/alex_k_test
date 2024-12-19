@@ -1,4 +1,4 @@
-# Flutter Map Pin Sync App
+# Alex Karpov Test App With map and Sync
 
 A Flutter application demonstrating offline-first architecture with Firebase integration and efficient data synchronization.
 
