@@ -5,6 +5,8 @@ import 'package:alex_k_test/src/core/exceptions/on_sync_bloc.dart';
 import 'package:alex_k_test/src/features/domain/states/general_screen_state.dart';
 import 'package:alex_k_test/src/features/presentation/blocs/add_map_pin/bloc.dart';
 import 'package:alex_k_test/src/features/presentation/blocs/add_map_pin/state.dart';
+import 'package:alex_k_test/src/features/presentation/blocs/user/bloc.dart';
+import 'package:alex_k_test/src/features/presentation/blocs/user/state.dart';
 import 'package:alex_k_test/src/features/presentation/screens/add_edit_pin_screen.dart';
 import 'package:alex_k_test/src/features/presentation/views/error_view.dart';
 import 'package:alex_k_test/src/features/presentation/views/menu_view.dart';
@@ -46,6 +48,7 @@ class _MainViewState extends State<MainView> {
     );
   }
 
+
   //Getters for Bloc components
   Widget get _getMapBody =>
       BlocBuilder<MapPinBloc, MapPinState>(builder: _getMapBodyBuilder);
@@ -61,13 +64,17 @@ class _MainViewState extends State<MainView> {
         },
       );
     }
-
-    return MapWidget(
-      userLat: 37.7749,
-      userLng: -122.4194,
-      pins: state.pins,
-      onPinTap: _handlePinTap,
-      onMapTap: _handleMapTap,
+    //User Builder
+    return BlocBuilder<UserBloc, UserState>(
+      builder: (BuildContext context, UserState userState) {
+        return MapWidget(
+          userLat: userState.userPosition.lat,
+          userLng: userState.userPosition.lng,
+          pins: state.pins,
+          onPinTap: _handlePinTap,
+          onMapTap: _handleMapTap,
+        );
+      },
     );
   }
 }

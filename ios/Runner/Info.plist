@@ -49,5 +49,10 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>We need your location to show pins on the map</string>
+    <key>NSLocationAlwaysUsageDescription</key>
+
 </dict>
 </plist>

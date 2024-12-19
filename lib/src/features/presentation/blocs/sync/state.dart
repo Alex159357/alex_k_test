@@ -1,4 +1,3 @@
-
 class SyncState {
   bool isLoading;
   String? error;
@@ -16,8 +15,7 @@ class SyncState {
     return SyncState();
   }
 
-  bool get syncAvailable => !isLoading && queueCount >0;
-
+  bool get syncAvailable => !isLoading && queueCount > 0;
 
   SyncState copyWith({
     bool? isLoading,

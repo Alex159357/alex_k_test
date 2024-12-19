@@ -5,6 +5,7 @@ import 'package:alex_k_test/src/core/utils/permissions/permissions_handler.dart'
 import 'package:alex_k_test/src/features/domain/entities/user_entity.dart';
 import 'package:alex_k_test/src/features/domain/states/auth_state.dart';
 import 'package:alex_k_test/src/features/domain/states/general_screen_state.dart';
+import 'package:alex_k_test/src/features/domain/usecases/location_usecase.dart';
 import 'package:alex_k_test/src/features/domain/usecases/user_usecase.dart';
 import 'package:bloc/bloc.dart';
 
@@ -12,10 +13,8 @@ import 'event.dart';
 import 'state.dart';
 
 class UserBloc extends Bloc<UserEvent, UserState> {
-  final UserUseCase _userUseCase;
-  final PermissionsHandler _permissionsHandler;
 
-  UserBloc(this._userUseCase, this._permissionsHandler)
+  UserBloc(this._userUseCase, this._permissionsHandler, this._locationUseCase)
       : super(const UserState().init()) {
     on<InitEvent>(_init);
     on<OnAuthError>(_onAuthError);
@@ -26,7 +25,12 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     on<OnLoginPressed>(_onLoginPressed);
     on<OnLogoutPressed>(_onLogoutPressed);
     on<OnRestoreScreenState>(_onRestoreScreenState);
+    on<OnUserLocationChanged>(_onUserLocationChanged);
   }
+
+  final UserUseCase _userUseCase;
+  final PermissionsHandler _permissionsHandler;
+  final LocationUseCase _locationUseCase;
 
   void _authError(Failure failure) {
     if(failure is MessageFailure) {
@@ -44,6 +48,16 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     final autoAuthResult = await _userUseCase.tryAuth();
     autoAuthResult.fold(_authError, authSuccess);
     emit(state.copyWith(screenState: const InitialScreenState()));
+    final permissionResult = await _permissionsHandler.getLocationPermissionsStatus();
+    if(permissionResult){
+      _locationUseCase.observeLocation().listen((e){
+        add(OnUserLocationChanged(e));
+      });
+    }
+  }
+
+  void _onUserLocationChanged(OnUserLocationChanged event, Emitter<UserState> emit) async {
+    emit(state.copyWith(userPosition: event.userPositionEntity));
   }
 
   FutureOr<void> _onAuthError(OnAuthError event, Emitter<UserState> emit) {
@@ -62,7 +76,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
 
   FutureOr<void> _onAuthSuccess(
       OnAuthSuccess event, Emitter<UserState> emit) async {
-    await _permissionsHandler.requestLocationPermissions();
+    _permissionsHandler.requestLocationPermissions();
     emit(state.copyWith(
       screenState: const InitialScreenState(),
       authState: Authenticated(event.userEntity),

@@ -4,6 +4,7 @@ import 'package:alex_k_test/src/core/database/data_base_providers/sync_queue_dat
 import 'package:alex_k_test/src/core/database/data_base_providers/user_database.dart';
 import 'package:alex_k_test/src/core/database/database_helper.dart';
 import 'package:alex_k_test/src/core/network/network_info.dart';
+import 'package:alex_k_test/src/core/utils/location_service/location_service.dart';
 import 'package:alex_k_test/src/core/utils/mappers/map_pin_mapper.dart';
 import 'package:alex_k_test/src/core/utils/mappers/universal_mapper.dart';
 import 'package:alex_k_test/src/core/utils/permissions/permissions_handler.dart';
@@ -18,6 +19,7 @@ import 'package:alex_k_test/src/features/data/repositories/user_repository_impl.
 import 'package:alex_k_test/src/features/domain/repositories/map_pins_repository.dart';
 import 'package:alex_k_test/src/features/domain/repositories/sync_queue_repository.dart';
 import 'package:alex_k_test/src/features/domain/repositories/user_repository.dart';
+import 'package:alex_k_test/src/features/domain/usecases/location_usecase.dart';
 import 'package:alex_k_test/src/features/domain/usecases/pin_usecase.dart';
 import 'package:alex_k_test/src/features/domain/usecases/sync_queue_usecase.dart';
 import 'package:alex_k_test/src/features/domain/usecases/user_usecase.dart';
@@ -95,6 +97,7 @@ class InjectionContainer {
     _getIt.registerLazySingleton(() => PermissionsHandler());
     _getIt.registerLazySingleton(() => UniversalMapper());
     _getIt.registerLazySingleton(() => MapPinMapper());
+    _getIt.registerLazySingleton(() => LocationService());
   }
 
   Future<void> _initStorage() async {
@@ -145,10 +148,11 @@ class InjectionContainer {
     _getIt.registerLazySingleton(() => UserUseCase(_getIt()));
     _getIt.registerLazySingleton(() => PinUseCase(_getIt()));
     _getIt.registerLazySingleton(() => SyncQueueUseCase(_getIt()));
+    _getIt.registerLazySingleton(() => LocationUseCase(_getIt()));
   }
 
   void _initBlocs() {
-    _getIt.registerLazySingleton<UserBloc>(() => UserBloc(_getIt(), _getIt()));
+    _getIt.registerLazySingleton<UserBloc>(() => UserBloc(_getIt(), _getIt(), _getIt()));
     _getIt.registerLazySingleton<MapPinBloc>(() => MapPinBloc(
           _getIt<PinUseCase>(),
           _getIt<SyncQueueUseCase>(),

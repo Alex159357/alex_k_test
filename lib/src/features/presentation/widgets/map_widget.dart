@@ -22,29 +22,78 @@ class MapWidget extends StatefulWidget {
     required this.userLng,
     required this.pins,
     required this.onMapTap,
-    this.onPinTap, // Optional callback
-    this.initialZoom = 13.0, // Increased default zoom
+    this.onPinTap,
+    this.initialZoom = 13.0,
   });
 
   @override
   State<MapWidget> createState() => _MapWidgetState();
 }
 
-class _MapWidgetState extends State<MapWidget> {
+class _MapWidgetState extends State<MapWidget> with TickerProviderStateMixin {
   final MapController mapController = MapController();
   bool _isDownloading = false;
   bool _isInitialized = false;
   late Directory _cacheDir;
   TileProvider? _tileProvider;
-
-  // Define map bounds for San Francisco area
-  static const LatLng _swBound = LatLng(37.6, -122.6);
-  static const LatLng _neBound = LatLng(37.9, -122.2);
+  TabController? _tabController;
+  List<Marker> _markers = [];
+  Color? _primaryColor;
 
   @override
   void initState() {
     super.initState();
     _initializeCache();
+    _initTabController();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final newPrimaryColor = Theme.of(context).primaryColor;
+    if (_primaryColor != newPrimaryColor) {
+      _primaryColor = newPrimaryColor;
+      _buildMarkers();
+    }
+  }
+
+  void _initTabController() {
+    _tabController?.removeListener(_handleTabChange);
+    _tabController?.dispose();
+    if (widget.pins.isNotEmpty) {
+      _tabController = TabController(length: widget.pins.length, vsync: this);
+      _tabController!.addListener(_handleTabChange);
+    } else {
+      _tabController = null;
+    }
+  }
+
+  void _handleTabChange() {
+    if (_tabController != null && !_tabController!.indexIsChanging) {
+      final selectedPin = widget.pins[_tabController!.index];
+      mapController.move(
+        LatLng(selectedPin.latitude, selectedPin.longitude),
+        mapController.camera.zoom,
+      );
+    }
+  }
+
+  @override
+  void didUpdateWidget(MapWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.userLat != widget.userLat ||
+        oldWidget.userLng != widget.userLng ||
+        oldWidget.pins != widget.pins) {
+      _buildMarkers();
+    }
+    if (oldWidget.userLat != widget.userLat ||
+        oldWidget.userLng != widget.userLng) {
+      mapController.move(
+          LatLng(widget.userLat, widget.userLng), mapController.camera.zoom);
+    }
+    if (oldWidget.pins.length != widget.pins.length) {
+      _initTabController();
+    }
   }
 
   Future<void> _initializeCache() async {
@@ -63,13 +112,6 @@ class _MapWidgetState extends State<MapWidget> {
     } catch (e) {
       debugPrint('Error initializing cache: $e');
     }
-  }
-
-  bool _isValidCoordinate(double lat, double lng) {
-    return lat >= _swBound.latitude &&
-        lat <= _neBound.latitude &&
-        lng >= _swBound.longitude &&
-        lng <= _neBound.longitude;
   }
 
   Future<void> _downloadRegion() async {
@@ -135,110 +177,172 @@ class _MapWidgetState extends State<MapWidget> {
         .floor();
   }
 
-  List<Marker> _buildMarkers() {
+  void _buildMarkers() {
+    if (!mounted || _primaryColor == null) return;
+
     final markers = <Marker>[];
 
     // Add user location marker
-    if (_isValidCoordinate(widget.userLat, widget.userLng)) {
+    markers.add(
+      Marker(
+        point: LatLng(widget.userLat, widget.userLng),
+        width: 80,
+        height: 80,
+        child: Column(
+          children: [
+            Icon(
+              Icons.person_pin_circle,
+              color: _primaryColor,
+              size: 40,
+            ),
+            Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(4),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 4,
+                  ),
+                ],
+              ),
+              child: const Text(
+                'You',
+                style: TextStyle(fontSize: 12),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    // Add custom pins
+    for (final pin in widget.pins) {
       markers.add(
         Marker(
-          point: LatLng(widget.userLat, widget.userLng),
-          width: 80,
-          height: 80,
-          child: Column(
-            children: [
-              Icon(
-                Icons.person_pin_circle,
-                color: Theme.of(context).primaryColor,
-                size: 40,
-              ),
-              Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(4),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      blurRadius: 4,
+          point: LatLng(pin.latitude, pin.longitude),
+          width: 100,
+          height: 100,
+          child: GestureDetector(
+            onTap: () {
+              if (widget.onPinTap != null) {
+                widget.onPinTap!(pin.id);
+              }
+            },
+            child: Column(
+              children: [
+                Badge(
+                  isLabelVisible: pin.firebaseId == null,
+                  smallSize: 6,
+                  largeSize: 16,
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  label: const Icon(
+                    Icons.sync_disabled,
+                    color: Colors.white,
+                  ),
+                  child: Icon(
+                    Icons.location_pin,
+                    color: _primaryColor,
+                    size: 60,
+                  ),
+                ),
+                if (pin.label.isNotEmpty)
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(4),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 4,
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                child: const Text(
-                  'You',
-                  style: TextStyle(fontSize: 12),
-                ),
-              ),
-            ],
+                    child: Text(
+                      pin.label,
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       );
     }
 
-    // Add custom pins
-    for (final pin in widget.pins) {
-      if (_isValidCoordinate(pin.latitude, pin.longitude)) {
-        markers.add(
-          Marker(
-            point: LatLng(pin.latitude, pin.longitude),
-            width: 100,
-            height: 100,
-            child: GestureDetector(
-              // Added GestureDetector for tap handling
-              onTap: () {
-                if (widget.onPinTap != null) {
-                  widget.onPinTap!(pin.id);
-                }
-              },
-              child: Column(
-                children: [
-                  Badge(
-                    isLabelVisible: pin.firebaseId == null,
-                    smallSize: 6,
-                    largeSize: 16,
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    label: const Icon(Icons.sync_disabled, color: Colors.white,),
-                    child: Icon(
-                      Icons.location_pin,
-                      color: Theme.of(context).primaryColor,
-                      size: 60,
-                    ),
-                  ),
-                  if (pin.label.isNotEmpty)
-                    Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(4),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 4,
-                          ),
-                        ],
-                      ),
-                      child: Text(
-                        pin.label,
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-        );
-      } else {
-        print("Skipping invalid pin -> $pin");
-      }
-    }
-
-    return markers;
+    setState(() {
+      _markers = markers;
+    });
   }
 
   void _handleTap(TapPosition tapPosition, LatLng point) {
-    if (_isValidCoordinate(point.latitude, point.longitude)) {
-      widget.onMapTap(point.latitude, point.longitude);
+    widget.onMapTap(point.latitude, point.longitude);
+  }
+
+  Widget _buildMapControls() {
+    return Positioned(
+      right: 16,
+      bottom: 80,
+      child: Column(
+        children: [
+          FloatingActionButton(
+            heroTag: "centerLocation",
+            onPressed: () {
+              mapController.move(
+                LatLng(widget.userLat, widget.userLng),
+                mapController.camera.zoom,
+              );
+            },
+            child: const Icon(Icons.my_location),
+          ),
+          const SizedBox(height: 8),
+          FloatingActionButton(
+            heroTag: "zoomIn",
+            onPressed: () {
+              mapController.move(
+                mapController.camera.center,
+                mapController.camera.zoom + 1,
+              );
+            },
+            child: const Icon(Icons.add),
+          ),
+          const SizedBox(height: 8),
+          FloatingActionButton(
+            heroTag: "zoomOut",
+            onPressed: () {
+              mapController.move(
+                mapController.camera.center,
+                mapController.camera.zoom - 1,
+              );
+            },
+            child: const Icon(Icons.remove),
+          ),
+        ],
+      ),
+    );
+  }
+
+  PreferredSizeWidget? _buildTabBar() {
+    if (widget.pins.isEmpty || _tabController == null) {
+      return null;
     }
+    return TabBar(
+      controller: _tabController,
+      isScrollable: true,
+      tabs: widget.pins.map((pin) {
+        return Tab(
+          child: Row(
+            children: [
+              const Icon(Icons.location_pin),
+              const SizedBox(width: 8),
+              Text(pin.label.isEmpty ? 'Pin ${pin.id}' : pin.label),
+            ],
+          ),
+        );
+      }).toList(),
+    );
   }
 
   @override
@@ -250,6 +354,12 @@ class _MapWidgetState extends State<MapWidget> {
     }
 
     return Scaffold(
+      appBar: PreferredSize(
+        preferredSize: Size.fromHeight(60.0),
+        child: AppBar(
+          bottom: _buildTabBar(),
+        ),
+      ),
       body: Stack(
         children: [
           FlutterMap(
@@ -257,17 +367,12 @@ class _MapWidgetState extends State<MapWidget> {
             options: MapOptions(
               initialCenter: LatLng(widget.userLat, widget.userLng),
               initialZoom: widget.initialZoom,
-              minZoom: 11.0, // Increased minimum zoom
+              minZoom: 2.0,
               maxZoom: 18.0,
-              keepAlive: true,
               onTap: _handleTap,
               interactionOptions: const InteractionOptions(
                 enableScrollWheel: true,
                 enableMultiFingerGestureRace: true,
-              ),
-              // Add bounds
-              cameraConstraint: CameraConstraint.contain(
-                bounds: LatLngBounds(_swBound, _neBound),
               ),
             ),
             children: [
@@ -278,20 +383,21 @@ class _MapWidgetState extends State<MapWidget> {
                   'accessToken': ApiKeys.mapboxAccessToken,
                 },
                 tileProvider: _tileProvider!,
-                keepBuffer: 50,
                 backgroundColor: Colors.grey[300],
                 maxZoom: 18,
-                minZoom: 11,
+                minZoom: 2,
               ),
               MarkerLayer(
-                markers: _buildMarkers(),
+                markers: _markers,
               ),
             ],
           ),
+          _buildMapControls(),
           Positioned(
             bottom: 16,
             right: 16,
             child: FloatingActionButton(
+              heroTag: "download",
               onPressed: _isDownloading ? null : _downloadRegion,
               child: _isDownloading
                   ? const CircularProgressIndicator(color: Colors.white)
@@ -305,6 +411,8 @@ class _MapWidgetState extends State<MapWidget> {
 
   @override
   void dispose() {
+    _tabController?.removeListener(_handleTabChange);
+    _tabController?.dispose();
     super.dispose();
   }
 }

@@ -49,7 +49,6 @@ class LocalDataSourceImpl implements LocalDataSource {
 
   @override
   Future<bool> updateMapPin(MapPinModel mapPinModel) async {
-    print("UpdatePin -> ${mapPinModel.id}");
     if (mapPinModel.id == null) {
       return false;
     }
@@ -78,5 +77,10 @@ class LocalDataSourceImpl implements LocalDataSource {
   Stream<MapPinModel?> observeSingleMapPin(double id) {
     // TODO: implement observeSingleMapPin
     throw UnimplementedError();
+  }
+
+  @override
+  Future<void> deleteMapPins() async {
+    await _mapPinDatabase.deleteMapPins();
   }
 }

@@ -67,7 +67,7 @@ class QueueProcessor {
           data.sendPort.send(progress);
           // Send processed item
           data.sendPort.send(item);
-        
+
           // Add small delay to prevent overwhelming the main thread
           await Future.delayed(const Duration(milliseconds: 100));
         } catch (e) {

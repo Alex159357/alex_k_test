@@ -20,14 +20,14 @@ class MenuView extends StatelessWidget {
     );
   }
 
-
   //Getters for Bloc components
   Widget get _getProfile =>
       BlocBuilder<UserBloc, UserState>(builder: _getProfileBuilder);
 
-  Widget get _getSyncRow => BlocBuilder<SyncBloc, SyncState>(builder: _getSyncRowBuilder);
+  Widget get _getSyncRow =>
+      BlocBuilder<SyncBloc, SyncState>(builder: _getSyncRowBuilder);
 
-//Builders
+  //Builders
   Widget _getProfileBuilder(BuildContext context, UserState state) {
     if (state.authState is Authenticated) {
       final user = (state.authState as Authenticated).userEntity;
@@ -93,9 +93,9 @@ class MenuView extends StatelessWidget {
 
   Widget _getSyncRowBuilder(BuildContext context, SyncState state) {
     return InkWell(
-      onTap: () => state.syncAvailable? context.syncBloc.runSync() : (){},
+      onTap: () => state.syncAvailable ? context.syncBloc.runSync() : null,
       child: Opacity(
-        opacity: state.syncAvailable? 1 : .5,
+        opacity: state.syncAvailable ? 1 : .5,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Row(
@@ -118,8 +118,9 @@ class MenuView extends StatelessWidget {
       backgroundColor: context.theme.colorScheme.primaryContainer,
       child: isLoading
           ? CircularProgressIndicator(
-        valueColor: AlwaysStoppedAnimation(context.theme.colorScheme.onPrimaryContainer),
-      )
+              valueColor: AlwaysStoppedAnimation(
+                  context.theme.colorScheme.onPrimaryContainer),
+            )
           : const Icon(Icons.sync, weight: 100),
     );
   }
@@ -148,8 +149,8 @@ class MenuView extends StatelessWidget {
             ),
           ],
         ),
+        LinearProgressIndicator(value: state.syncProgress,)
       ],
     );
   }
-
 }

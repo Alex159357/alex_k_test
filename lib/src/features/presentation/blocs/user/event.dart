@@ -1,4 +1,5 @@
 import 'package:alex_k_test/src/features/domain/entities/user_entity.dart';
+import 'package:alex_k_test/src/features/domain/entities/user_position_entity.dart';
 import 'package:flutter/foundation.dart';
 
 @immutable
@@ -51,4 +52,10 @@ class OnRestoreScreenState extends UserEvent{
 
 class OnLogoutPressed extends UserEvent {
   const OnLogoutPressed();
+}
+
+class OnUserLocationChanged extends UserEvent{
+  final UserPositionEntity userPositionEntity;
+
+  const OnUserLocationChanged(this.userPositionEntity);
 }

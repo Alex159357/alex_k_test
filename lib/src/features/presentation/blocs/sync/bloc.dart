@@ -11,6 +11,7 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
     on<RunSync>(_runtSync);
     on<OnSyncComplete>(_onSyncComplete);
     on<OnSyncError>(_onSyncError);
+    on<OnSyncProcessorEvent>(_onSyncProcessorEvent);
   }
 
   final SyncQueueUseCase _syncQueueUseCase;
@@ -29,14 +30,14 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
   }
 
   void _runtSync(RunSync event, Emitter<SyncState> emit) {
-    emit(state.copyWith(isLoading : true));
+    emit(state.copyWith(isLoading: true));
     _runSyncProcess();
   }
 
-  void _runSyncProcess(){
+  void _runSyncProcess() {
     _syncQueueUseCase.processQueueItems(
         onProgressUpdate: (progress) {
-          print("SyncProgress -> $progress");
+          add(OnSyncProcessorEvent(progress));
         },
         onItemProcessed: (SyncQueueEntity) {},
         onComplete: () {
@@ -47,12 +48,17 @@ class SyncBloc extends Bloc<SyncEvent, SyncState> {
         });
   }
 
+  void _onSyncProcessorEvent(
+      OnSyncProcessorEvent event, Emitter<SyncState> emit) {
+    emit(state.copyWith(syncProgress: event.percentage));
+  }
+
   void _onSyncComplete(OnSyncComplete event, Emitter<SyncState> emit) {
-    emit(state.copyWith(isLoading : false));
+    emit(state.copyWith(isLoading: false));
   }
 
   void _onSyncError(OnSyncError event, Emitter<SyncState> emit) {
-    emit(state.copyWith(isLoading : false));
+    emit(state.copyWith(isLoading: false));
   }
 
 }

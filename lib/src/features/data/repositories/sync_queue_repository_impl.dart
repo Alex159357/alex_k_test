@@ -105,30 +105,53 @@ class SyncQueueRepositoryImpl implements SyncQueueRepository {
     SyncQueueEntity item,
     void Function(Object)? onError,
   ) async {
-    final firebaseId = await _remoteDataSource.uploadMapPin(pin);
-    if (firebaseId != null) {
-      final updatedPin = pin.copyWith(firebaseId: firebaseId);
-      await _remoteDataSource.updateMapPin(firebaseId, updatedPin);
+    try {
+      final firebaseId = await _remoteDataSource.uploadMapPin(pin);
+      if (firebaseId != null) {
+        final updatedPin = pin.copyWith(firebaseId: firebaseId);
+        final remoteUpdateSuccess =
+            await _remoteDataSource.updateMapPin(firebaseId, updatedPin);
 
-      final localUpdateResult = await _localDataSource.updateMapPin(updatedPin);
-      if (!localUpdateResult) {
-        _logger.e('Failed to update local pin with firebaseId');
-        return;
+        if (!remoteUpdateSuccess) {
+          _logger.e('Failed to update pin in Firebase');
+          return;
+        }
+
+        final localUpdateResult =
+            await _localDataSource.updateMapPin(updatedPin);
+        if (!localUpdateResult) {
+          _logger.e('Failed to update local pin with firebaseId');
+          return;
+        }
+
+        await deleteQueueItem(item.id!);
       }
-
-      await deleteQueueItem(item.id!);
+    } catch (e) {
+      _logger.e('Error in _handleCreatePin', error: e);
+      onError?.call(e);
     }
   }
 
   Future<void> _handleUpdatePin(MapPinModel pin, SyncQueueEntity item) async {
-    if (pin.firebaseId != null) {
-      final success =
-          await _remoteDataSource.updateMapPin(pin.firebaseId!, pin);
-      if (success) {
-        await deleteQueueItem(item.id!);
+    try {
+      if (pin.firebaseId != null) {
+        final success =
+            await _remoteDataSource.updateMapPin(pin.firebaseId!, pin);
+        if (success) {
+          final localUpdateSuccess = await _localDataSource.updateMapPin(pin);
+          if (localUpdateSuccess) {
+            await deleteQueueItem(item.id!);
+          } else {
+            _logger.e('Failed to update local pin');
+          }
+        } else {
+          _logger.e('Failed to update pin in Firebase');
+        }
+      } else {
+        _logger.e('Cannot update pin without firebaseId');
       }
-    } else {
-      _logger.e('Cannot update pin without firebaseId');
+    } catch (e) {
+      _logger.e('Error in _handleUpdatePin', error: e);
     }
   }
 
@@ -147,26 +170,24 @@ class SyncQueueRepositoryImpl implements SyncQueueRepository {
     List<MapPinModel> remotePins,
     void Function(Object)? onError,
   ) async {
-    for (final remotePin in remotePins) {
-      try {
-        final localPins = await _localDataSource.readMapPins() ?? [];
-        final localPin = localPins.firstWhere(
-          (pin) => pin.firebaseId == remotePin.firebaseId,
-          orElse: () => remotePin,
-        );
-        await _localDataSource.saveMapPin(remotePin.copyWith(id: DateTime.now().millisecondsSinceEpoch));
-        // if (localPin.firebaseId == remotePin.firebaseId) {
-        //   await _localDataSource.updateMapPin(remotePin);
-        // } else {
-        //   final pinWithNewId = remotePin.copyWith(
-        //     id: DateTime.now().millisecondsSinceEpoch,
-        //   );
-        //   await _localDataSource.saveMapPin(pinWithNewId);
-        // }
-      } catch (e) {
-        _logger.e('Error syncing remote pin locally', error: e);
-        onError?.call(e);
+    try {
+      // First delete all local pins
+      await _localDataSource.deleteMapPins();
+
+      // Then save all remote pins with sequential IDs
+      for (int i = 0; i < remotePins.length; i++) {
+        final pin = remotePins[i];
+        final localPin = pin.copyWith(id: i + 1);
+        final success = await _localDataSource.saveMapPin(localPin);
+
+        if (success == null) {
+          _logger.e('Failed to save remote pin locally: ${pin.firebaseId}');
+          onError?.call(Exception('Failed to save remote pin locally'));
+        }
       }
+    } catch (e) {
+      _logger.e('Error in _updateLocalPinsWithRemote', error: e);
+      onError?.call(e);
     }
   }
 

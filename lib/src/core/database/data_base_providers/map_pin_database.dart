@@ -31,6 +31,17 @@ class MapPinDatabase {
     }
   }
 
+  Future<void> deleteMapPins() async {
+    try {
+      final db = await _databaseHelper.database;
+      final result = await db.delete('map_pins');
+      _logger.d('Delete map pins from database: $result');
+      _onDatabaseUpdated();
+    } catch (e, t) {
+      _logger.e("Error deleting map pins", error: e, stackTrace: t);
+    }
+  }
+
   Stream<Map<String, dynamic>> observeSingleMapPin(double id) {
     return _getSinglePinStream(id);
   }

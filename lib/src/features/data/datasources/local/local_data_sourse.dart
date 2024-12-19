@@ -12,4 +12,5 @@ abstract class LocalDataSource {
   Future<MapPinModel?> readMapPinByLatLng(double lat, double lng);
   Stream<List<MapPinModel>?> observeMapPins();
   Stream<MapPinModel?> observeSingleMapPin(double id);
+  Future<void> deleteMapPins();
 }
